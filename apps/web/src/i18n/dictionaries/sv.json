@@ -1,0 +1,100 @@
+{
+  "app": {
+    "name": "LiaMatch",
+    "tagline": "Matcha LIA-studenter och arbetsgivare på ett seriöst sätt"
+  },
+  "nav": {
+    "match": "Matcha",
+    "explore": "Utforska",
+    "about": "Om",
+    "login": "Logga in",
+    "profile": "Profil",
+    "signOut": "Logga ut"
+  },
+  "common": {
+    "language": "Språk",
+    "swedish": "Svenska",
+    "english": "English",
+    "save": "Spara",
+    "cancel": "Avbryt",
+    "loading": "Laddar…",
+    "error": "Något gick fel"
+  },
+  "home": {
+    "heroTitle": "LiaMatch",
+    "heroSubtitle": "Snabb onboarding. Tydliga profiler. Enkla annonser. Smart matchning.",
+    "primaryCta": "Kom igång",
+    "secondaryCta": "Utforska annonser"
+  },
+  "auth": {
+    "title": "Logga in",
+    "subtitle": "Vi skickar en magic link till din e-post.",
+    "emailLabel": "E-post",
+    "emailPlaceholder": "din@epost.se",
+    "sendLink": "Skicka länk",
+    "sent": "Klart! Kolla din e-post för inloggningslänk."
+  },
+  "onboarding": {
+    "roleTitle": "Välj roll",
+    "roleSubtitle": "Det här styr vilka vyer och actions du får.",
+    "student": "Student",
+    "company": "Företag",
+    "continue": "Fortsätt"
+  },
+  "match": {
+    "title": "Matcha",
+    "studentSubtitle": "Rekommenderade LIA-platser baserat på din profil.",
+    "companySubtitle": "Rekommenderade kandidater baserat på din annons.",
+    "whyTitle": "Varför matchar vi?",
+    "apply": "Ansök / Visa intresse",
+    "applied": "Intresse skickat",
+    "score": "Matchscore"
+  },
+  "explore": {
+    "title": "Utforska",
+    "filters": "Filter",
+    "city": "Stad",
+    "track": "Inriktning",
+    "period": "Period",
+    "search": "Sök",
+    "results": "Resultat"
+  },
+  "profile": {
+    "title": "Profil",
+    "studentTitle": "Studentprofil",
+    "companyTitle": "Företagsprofil",
+    "firstName": "Förnamn",
+    "lastName": "Efternamn",
+    "track": "Inriktning",
+    "school": "Skola",
+    "city": "Stad",
+    "github": "GitHub (frivilligt)",
+    "linkedin": "LinkedIn (frivilligt)",
+    "projectTitle": "Starkaste projekt: titel (frivilligt)",
+    "projectDesc": "Starkaste projekt: beskrivning (frivilligt)",
+    "projectUrl": "Starkaste projekt: länk (frivilligt)",
+    "availability": "Tillgängliga perioder",
+    "availabilityHelp": "Lägg till ett eller flera datumintervall.",
+    "addPeriod": "Lägg till period",
+    "start": "Start",
+    "end": "Slut",
+    "cv": "CV (frivilligt)",
+    "pb": "Personligt brev (frivilligt)",
+    "companyName": "Företagsnamn",
+    "website": "Webbplats (frivilligt)",
+    "saved": "Sparat"
+  },
+  "internship": {
+    "newTitle": "Skapa LIA-annons",
+    "title": "Titel",
+    "description": "Beskrivning",
+    "seats": "Antal platser",
+    "trackFocus": "Inriktning/kompetens",
+    "skills": "Skills (kommaseparerat)",
+    "periodStart": "Period start",
+    "periodEnd": "Period slut",
+    "applicationStart": "Ansökningsfönster start",
+    "applicationEnd": "Ansökningsfönster slut",
+    "create": "Publicera"
+  }
+}

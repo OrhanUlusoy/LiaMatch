@@ -1,0 +1,100 @@
+{
+  "app": {
+    "name": "LiaMatch",
+    "tagline": "Match LIA students and employers in a serious, focused way"
+  },
+  "nav": {
+    "match": "Match",
+    "explore": "Explore",
+    "about": "About",
+    "login": "Sign in",
+    "profile": "Profile",
+    "signOut": "Sign out"
+  },
+  "common": {
+    "language": "Language",
+    "swedish": "Svenska",
+    "english": "English",
+    "save": "Save",
+    "cancel": "Cancel",
+    "loading": "Loading…",
+    "error": "Something went wrong"
+  },
+  "home": {
+    "heroTitle": "LiaMatch",
+    "heroSubtitle": "Fast onboarding. Clear profiles. Simple listings. Smart matching.",
+    "primaryCta": "Get started",
+    "secondaryCta": "Explore internships"
+  },
+  "auth": {
+    "title": "Sign in",
+    "subtitle": "We’ll send a magic link to your email.",
+    "emailLabel": "Email",
+    "emailPlaceholder": "you@email.com",
+    "sendLink": "Send link",
+    "sent": "Done! Check your email for the sign-in link."
+  },
+  "onboarding": {
+    "roleTitle": "Choose role",
+    "roleSubtitle": "This controls what you can see and do.",
+    "student": "Student",
+    "company": "Company",
+    "continue": "Continue"
+  },
+  "match": {
+    "title": "Match",
+    "studentSubtitle": "Recommended internships based on your profile.",
+    "companySubtitle": "Recommended candidates based on your listing.",
+    "whyTitle": "Why this match?",
+    "apply": "Apply / Express interest",
+    "applied": "Interest sent",
+    "score": "Match score"
+  },
+  "explore": {
+    "title": "Explore",
+    "filters": "Filters",
+    "city": "City",
+    "track": "Track",
+    "period": "Period",
+    "search": "Search",
+    "results": "Results"
+  },
+  "profile": {
+    "title": "Profile",
+    "studentTitle": "Student profile",
+    "companyTitle": "Company profile",
+    "firstName": "First name",
+    "lastName": "Last name",
+    "track": "Track",
+    "school": "School",
+    "city": "City",
+    "github": "GitHub (optional)",
+    "linkedin": "LinkedIn (optional)",
+    "projectTitle": "Strongest project: title (optional)",
+    "projectDesc": "Strongest project: description (optional)",
+    "projectUrl": "Strongest project: link (optional)",
+    "availability": "Availability periods",
+    "availabilityHelp": "Add one or more date ranges.",
+    "addPeriod": "Add period",
+    "start": "Start",
+    "end": "End",
+    "cv": "CV (optional)",
+    "pb": "Cover letter (optional)",
+    "companyName": "Company name",
+    "website": "Website (optional)",
+    "saved": "Saved"
+  },
+  "internship": {
+    "newTitle": "Create internship listing",
+    "title": "Title",
+    "description": "Description",
+    "seats": "Seats",
+    "trackFocus": "Track / focus",
+    "skills": "Skills (comma separated)",
+    "periodStart": "Period start",
+    "periodEnd": "Period end",
+    "applicationStart": "Application window start",
+    "applicationEnd": "Application window end",
+    "create": "Publish"
+  }
+}
