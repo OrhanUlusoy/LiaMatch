@@ -28,7 +28,7 @@ function NavLink({
       href={href}
       onClick={onClick}
       className={cn(
-        "rounded-md px-3 py-2 text-sm font-medium",
+        "rounded-md px-2 py-1.5 text-[13px] font-medium whitespace-nowrap",
         active ? "bg-secondary text-foreground" : "text-muted-foreground hover:text-foreground",
       )}
     >
@@ -181,47 +181,37 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-10 border-b border-border bg-card/80 backdrop-blur dark:bg-card/60">
-      <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
-        <div className="flex items-center gap-4">
-          <Link href="/" className="flex items-center gap-2">
-            <Image src="/logo-dark.png" alt={t("app.name")} width={32} height={32} className="hidden h-8 w-8 dark:block" unoptimized />
-            <Image src="/logo-light.png" alt={t("app.name")} width={32} height={32} className="block h-8 w-8 dark:hidden" unoptimized />
-            <span className="gradient-text text-xl font-bold tracking-tight">{t("app.name")}</span>
-          </Link>
-          <nav aria-label="Main navigation" className="hidden items-center gap-1 md:flex">
-            {navLinks}
-          </nav>
-        </div>
+      <div className="flex items-center justify-between px-4 py-2.5 lg:px-6">
+        {/* Left: Logo */}
+        <Link href="/" className="flex items-center gap-1.5 shrink-0 mr-3">
+          <Image src="/logo-dark.png" alt={t("app.name")} width={28} height={28} className="hidden h-7 w-7 dark:block" unoptimized />
+          <Image src="/logo-light.png" alt={t("app.name")} width={28} height={28} className="block h-7 w-7 dark:hidden" unoptimized />
+          <span className="gradient-text text-lg font-bold tracking-tight whitespace-nowrap">{t("app.name")}</span>
+        </Link>
 
-        <div className="flex items-center gap-2">
+        {/* Center: Nav links */}
+        <nav aria-label="Main navigation" className="hidden min-w-0 flex-1 items-center gap-0.5 md:flex">
+          {navLinks}
+        </nav>
+
+        {/* Right: Actions */}
+        <div className="flex items-center gap-0.5 shrink-0 ml-3">
           {isAdmin && <ViewModeSwitcher current={viewMode} onChange={setViewMode} />}
           {isAuthed && <NotificationBell />}
-          {isAuthed && displayName && (
-            <span className="hidden text-xs text-muted-foreground sm:inline">
-              {displayName}
-            </span>
-          )}
           <ThemeToggle />
           <LanguageToggle />
           {isAuthed ? (
-            <>
-              <Link href="/profile" className="hidden sm:inline-flex">
-                <Button variant="secondary">{t("nav.profile")}</Button>
-              </Link>
-              <Button
-                variant="ghost"
-                className="hidden sm:inline-flex"
-                onClick={async () => {
-                  await supabase.auth.signOut();
-                  router.refresh();
-                }}
-              >
-                {t("nav.signOut")}
-              </Button>
-            </>
+            <UserMenu
+              profileLabel={t("nav.profile")}
+              signOutLabel={t("nav.signOut")}
+              onSignOut={async () => {
+                await supabase.auth.signOut();
+                router.refresh();
+              }}
+            />
           ) : (
             <Link href="/login" className="hidden sm:inline-flex">
-              <Button>{t("nav.login")}</Button>
+              <Button className="text-xs px-2 py-1">{t("nav.login")}</Button>
             </Link>
           )}
           {/* Mobile hamburger */}
@@ -277,6 +267,54 @@ export function Header() {
         </div>
       )}
     </header>
+  );
+}
+
+function UserMenu({
+  profileLabel,
+  signOutLabel,
+  onSignOut,
+}: {
+  profileLabel: string;
+  signOutLabel: string;
+  onSignOut: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground transition-colors hover:opacity-90"
+        aria-label={profileLabel}
+      >
+        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
+        </svg>
+      </button>
+      {open && (
+        <>
+          <div className="fixed inset-0 z-20" onClick={() => setOpen(false)} />
+          <div className="absolute right-0 z-30 mt-1 w-40 rounded-md border border-border bg-card shadow-lg">
+            <Link
+              href="/profile"
+              onClick={() => setOpen(false)}
+              className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm transition-colors hover:bg-secondary"
+            >
+              {profileLabel}
+            </Link>
+            <button
+              type="button"
+              onClick={() => { onSignOut(); setOpen(false); }}
+              className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-red-600 transition-colors hover:bg-secondary dark:text-red-400"
+            >
+              {signOutLabel}
+            </button>
+          </div>
+        </>
+      )}
+    </div>
   );
 }
 
