@@ -1,12 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { z } from "zod";
+import { rateLimit, validateOrigin } from "@/lib/api-helpers";
 
 const applySchema = z.object({
   internship_id: z.string().uuid(),
 });
 
-export async function GET() {
+const statusSchema = z.object({
+  application_id: z.string().uuid(),
+  status: z.enum(["pending", "viewed", "contacted", "rejected", "accepted"]),
+});
+
+export async function GET(request: NextRequest) {
+  const rl = rateLimit(request);
+  if (rl) return rl;
+
   const supabase = await createSupabaseServerClient();
   const {
     data: { user },
@@ -58,6 +67,11 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
+  const rl = rateLimit(request, { limit: 30 });
+  if (rl) return rl;
+  const originCheck = validateOrigin(request);
+  if (originCheck) return originCheck;
+
   const supabase = await createSupabaseServerClient();
   const {
     data: { user },
@@ -90,5 +104,92 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
+  // Notify company about new application
+  const { data: internshipInfo } = await supabase
+    .from("internships")
+    .select("company_user_id, title")
+    .eq("id", parsed.data.internship_id)
+    .single();
+  if (internshipInfo) {
+    await supabase.from("notifications").insert({
+      user_id: internshipInfo.company_user_id,
+      type: "new_application",
+      title: "Ny ansökan",
+      body: `En student har visat intresse för "${internshipInfo.title}".`,
+      related_id: data.id,
+    });
+  }
+
   return NextResponse.json(data, { status: 201 });
+}
+
+export async function PATCH(request: NextRequest) {
+  const rl = rateLimit(request, { limit: 30 });
+  if (rl) return rl;
+  const originCheck = validateOrigin(request);
+  if (originCheck) return originCheck;
+
+  const supabase = await createSupabaseServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const body = await request.json();
+  const parsed = statusSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+  }
+
+  // Verify the application belongs to one of the company's internships
+  const { data: app } = await supabase
+    .from("applications")
+    .select("internship_id, student_user_id")
+    .eq("id", parsed.data.application_id)
+    .single();
+
+  if (!app) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
+  const { data: internship } = await supabase
+    .from("internships")
+    .select("company_user_id, title")
+    .eq("id", app.internship_id)
+    .single();
+
+  if (!internship || internship.company_user_id !== user.id) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  const { data, error } = await supabase
+    .from("applications")
+    .update({ status: parsed.data.status })
+    .eq("id", parsed.data.application_id)
+    .select()
+    .single();
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  // Create notification for the student about status change
+  const statusLabels: Record<string, string> = {
+    viewed: "Visad",
+    contacted: "Kontaktad",
+    accepted: "Godkänd",
+    rejected: "Nekad",
+  };
+  if (parsed.data.status !== "pending") {
+    await supabase.from("notifications").insert({
+      user_id: app.student_user_id,
+      type: "status_change",
+      title: `Ansökan uppdaterad: ${statusLabels[parsed.data.status] ?? parsed.data.status}`,
+      body: `Din ansökan till "${internship.title}" har ändrat status.`,
+      related_id: parsed.data.application_id,
+    });
+  }
+
+  return NextResponse.json(data);
 }

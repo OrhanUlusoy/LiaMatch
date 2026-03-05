@@ -6,7 +6,12 @@ export async function middleware(request: NextRequest) {
   const response = await updateSession(request);
 
   if (!request.cookies.get(LANG_COOKIE)?.value) {
-    response.cookies.set(LANG_COOKIE, "sv", { path: "/", sameSite: "lax" });
+    response.cookies.set(LANG_COOKIE, "sv", {
+      path: "/",
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      httpOnly: false,
+    });
   }
 
   return response;

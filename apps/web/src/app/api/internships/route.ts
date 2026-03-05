@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { z } from "zod";
+import { rateLimit, validateOrigin } from "@/lib/api-helpers";
 
 const createSchema = z.object({
   title: z.string().min(1).max(200),
@@ -16,6 +17,9 @@ const createSchema = z.object({
 });
 
 export async function GET(request: NextRequest) {
+  const rl = rateLimit(request);
+  if (rl) return rl;
+
   const supabase = await createSupabaseServerClient();
   const { searchParams } = new URL(request.url);
 
@@ -36,6 +40,11 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const rl = rateLimit(request, { limit: 20 });
+  if (rl) return rl;
+  const originCheck = validateOrigin(request);
+  if (originCheck) return originCheck;
+
   const supabase = await createSupabaseServerClient();
   const {
     data: { user },

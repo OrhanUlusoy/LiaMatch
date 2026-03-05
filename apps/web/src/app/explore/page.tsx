@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import Link from "next/link";
 import { useT } from "@/i18n/useT";
 import { useI18n } from "@/i18n/I18nProvider";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/Card";
@@ -9,9 +9,9 @@ import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
-import { Textarea } from "@/components/ui/Textarea";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { CardSkeleton } from "@/components/ui/Skeleton";
 
-type Role = "student" | "company" | null;
 type Internship = {
   id: string;
   title: string;
@@ -32,11 +32,27 @@ export default function ExplorePage() {
   const { lang } = useI18n();
   const supabase = useMemo(() => createSupabaseBrowserClient(), []);
 
-  const [role, setRole] = useState<Role>(null);
   const [internships, setInternships] = useState<Internship[]>([]);
   const [cityFilter, setCityFilter] = useState("");
   const [trackFilter, setTrackFilter] = useState("");
+  const [keyword, setKeyword] = useState("");
   const [loading, setLoading] = useState(true);
+  const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
+  const [isAuthed, setIsAuthed] = useState(false);
+
+  // Load saved listings for bookmark toggle
+  useEffect(() => {
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      setIsAuthed(true);
+      const { data } = await supabase
+        .from("saved_listings")
+        .select("internship_id")
+        .eq("student_user_id", user.id);
+      if (data) setSavedIds(new Set(data.map(r => r.internship_id)));
+    })();
+  }, [supabase]);
 
   const load = useCallback(
     async (city?: string, track?: string) => {
@@ -52,26 +68,45 @@ export default function ExplorePage() {
   );
 
   useEffect(() => {
-    (async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (user) {
-        const { data } = await supabase
-          .from("users")
-          .select("role")
-          .eq("id", user.id)
-          .single();
-        setRole(data?.role ?? null);
-      }
-      await load();
-    })();
-  }, [supabase, load]);
+    load();
+  }, [load]);
 
   function handleSearch(e: React.FormEvent) {
     e.preventDefault();
     load(cityFilter, trackFilter);
   }
+
+  function clearFilters() {
+    setCityFilter("");
+    setTrackFilter("");
+    setKeyword("");
+    load();
+  }
+
+  async function toggleSave(internshipId: string) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    if (savedIds.has(internshipId)) {
+      await supabase.from("saved_listings").delete().eq("student_user_id", user.id).eq("internship_id", internshipId);
+      setSavedIds(prev => { const n = new Set(prev); n.delete(internshipId); return n; });
+    } else {
+      await supabase.from("saved_listings").insert({ student_user_id: user.id, internship_id: internshipId });
+      setSavedIds(prev => new Set(prev).add(internshipId));
+    }
+  }
+
+  // Client-side keyword filter
+  const filtered = keyword
+    ? internships.filter(i => {
+        const q = keyword.toLowerCase();
+        return i.title.toLowerCase().includes(q) ||
+          i.description.toLowerCase().includes(q) ||
+          i.company_profiles?.company_name?.toLowerCase().includes(q) ||
+          i.skills?.some(s => s.toLowerCase().includes(q));
+      })
+    : internships;
+
+  const hasFilters = cityFilter || trackFilter || keyword;
 
   return (
     <div className="space-y-6">
@@ -99,31 +134,53 @@ export default function ExplorePage() {
                 onChange={(e) => setTrackFilter(e.target.value)}
               />
             </div>
+            <div className="space-y-1">
+              <Label>{t("explore.keyword")}</Label>
+              <Input
+                placeholder={t("explore.keywordPlaceholder")}
+                value={keyword}
+                onChange={(e) => setKeyword(e.target.value)}
+              />
+            </div>
             <Button type="submit">{t("explore.search")}</Button>
+            {hasFilters && (
+              <Button type="button" variant="ghost" onClick={clearFilters}>{t("explore.clear")}</Button>
+            )}
           </form>
         </CardContent>
       </Card>
 
-      {/* Create internship (company only) */}
-      {role === "company" && <CreateInternshipForm onCreated={() => load(cityFilter, trackFilter)} />}
-
       {/* Results */}
       <div>
-        <h2 className="mb-3 text-sm font-medium text-neutral-600">
-          {t("explore.results")} ({internships.length})
+        <h2 className="mb-3 text-sm font-medium text-muted-foreground">
+          {t("explore.results")} ({filtered.length})
         </h2>
-        {loading && <p className="text-sm text-neutral-500">{t("common.loading")}</p>}
-        {internships.map((i) => (
+        {loading && <div className="grid gap-4 sm:grid-cols-2"><CardSkeleton /><CardSkeleton /><CardSkeleton /><CardSkeleton /></div>}
+        {!loading && filtered.length === 0 && (
+          <p className="text-center text-sm text-muted-foreground py-8">{t("explore.noResults")}</p>
+        )}
+        {filtered.map((i) => (
           <Card key={i.id} className="mb-4">
             <CardHeader>
-              <CardTitle>{i.title}</CardTitle>
-              <CardDescription>
-                {i.company_profiles?.company_name ?? "—"} · {i.city} ·{" "}
-                {i.seats} {lang === "sv" ? "platser" : "seats"}
-              </CardDescription>
+              <div className="flex items-start justify-between">
+                <div>
+                  <CardTitle>{i.title}</CardTitle>
+                  <CardDescription>
+                    {i.company_profiles?.company_name ?? "—"} · {i.city} ·{" "}
+                    {i.seats} {lang === "sv" ? "platser" : "seats"}
+                  </CardDescription>
+                </div>
+                {isAuthed && (
+                  <button type="button" onClick={() => toggleSave(i.id)} className="shrink-0 p-1 text-muted-foreground hover:text-primary transition-colors" title={savedIds.has(i.id) ? t("explore.unsave") : t("explore.save")}>
+                    <svg className="h-5 w-5" fill={savedIds.has(i.id) ? "currentColor" : "none"} viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0 1 11.186 0Z" />
+                    </svg>
+                  </button>
+                )}
+              </div>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-neutral-700 whitespace-pre-wrap mb-3">{i.description}</p>
+              <p className="text-sm text-muted-foreground whitespace-pre-wrap mb-3">{i.description}</p>
               <div className="flex flex-wrap gap-1.5">
                 <Badge>{i.track_focus}</Badge>
                 {i.skills?.map((s) => (
@@ -131,7 +188,7 @@ export default function ExplorePage() {
                 ))}
               </div>
               {i.period_start && i.period_end && (
-                <p className="mt-2 text-xs text-neutral-500">
+                <p className="mt-2 text-xs text-muted-foreground">
                   {lang === "sv" ? "Period" : "Period"}: {i.period_start} — {i.period_end}
                 </p>
               )}
@@ -140,137 +197,5 @@ export default function ExplorePage() {
         ))}
       </div>
     </div>
-  );
-}
-
-function CreateInternshipForm({ onCreated }: { onCreated: () => void }) {
-  const t = useT();
-  const [form, setForm] = useState({
-    title: "",
-    description: "",
-    city: "",
-    track_focus: "",
-    skills: "",
-    seats: "1",
-    period_start: "",
-    period_end: "",
-    application_start: "",
-    application_end: "",
-  });
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  function set(key: string, value: string) {
-    setForm((prev) => ({ ...prev, [key]: value }));
-  }
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setError(null);
-    setLoading(true);
-
-    const payload = {
-      title: form.title,
-      description: form.description,
-      city: form.city,
-      track_focus: form.track_focus,
-      skills: form.skills
-        .split(",")
-        .map((s) => s.trim())
-        .filter(Boolean),
-      seats: parseInt(form.seats, 10) || 1,
-      period_start: form.period_start || undefined,
-      period_end: form.period_end || undefined,
-      application_start: form.application_start || undefined,
-      application_end: form.application_end || undefined,
-    };
-
-    const res = await fetch("/api/internships", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-
-    setLoading(false);
-    if (res.ok) {
-      setForm({
-        title: "",
-        description: "",
-        city: "",
-        track_focus: "",
-        skills: "",
-        seats: "1",
-        period_start: "",
-        period_end: "",
-        application_start: "",
-        application_end: "",
-      });
-      onCreated();
-    } else {
-      const data = await res.json();
-      setError(typeof data.error === "string" ? data.error : JSON.stringify(data.error));
-    }
-  }
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{t("internship.newTitle")}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-1">
-            <Label>{t("internship.title")} *</Label>
-            <Input required value={form.title} onChange={(e) => set("title", e.target.value)} />
-          </div>
-          <div className="space-y-1">
-            <Label>{t("internship.description")} *</Label>
-            <Textarea required value={form.description} onChange={(e) => set("description", e.target.value)} />
-          </div>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-1">
-              <Label>{t("profile.city")} *</Label>
-              <Input required value={form.city} onChange={(e) => set("city", e.target.value)} />
-            </div>
-            <div className="space-y-1">
-              <Label>{t("internship.trackFocus")} *</Label>
-              <Input required value={form.track_focus} onChange={(e) => set("track_focus", e.target.value)} />
-            </div>
-          </div>
-          <div className="space-y-1">
-            <Label>{t("internship.skills")}</Label>
-            <Input value={form.skills} onChange={(e) => set("skills", e.target.value)} placeholder="Python, Docker, ML…" />
-          </div>
-          <div className="grid gap-4 sm:grid-cols-3">
-            <div className="space-y-1">
-              <Label>{t("internship.seats")}</Label>
-              <Input type="number" min="1" value={form.seats} onChange={(e) => set("seats", e.target.value)} />
-            </div>
-            <div className="space-y-1">
-              <Label>{t("internship.periodStart")}</Label>
-              <Input type="date" value={form.period_start} onChange={(e) => set("period_start", e.target.value)} />
-            </div>
-            <div className="space-y-1">
-              <Label>{t("internship.periodEnd")}</Label>
-              <Input type="date" value={form.period_end} onChange={(e) => set("period_end", e.target.value)} />
-            </div>
-          </div>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-1">
-              <Label>{t("internship.applicationStart")}</Label>
-              <Input type="date" value={form.application_start} onChange={(e) => set("application_start", e.target.value)} />
-            </div>
-            <div className="space-y-1">
-              <Label>{t("internship.applicationEnd")}</Label>
-              <Input type="date" value={form.application_end} onChange={(e) => set("application_end", e.target.value)} />
-            </div>
-          </div>
-          {error && <p className="text-sm text-red-600">{error}</p>}
-          <Button type="submit" disabled={loading}>
-            {loading ? t("common.loading") : t("internship.create")}
-          </Button>
-        </form>
-      </CardContent>
-    </Card>
   );
 }

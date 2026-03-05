@@ -1,11 +1,87 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:is(.dark, .dark *));
+
 @theme inline {
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-border: var(--c-border);
+  --color-ring: var(--c-ring);
+  --color-input: var(--c-input);
+}
+
+/* ── Light theme (WCAG AA verified) ── */
+:root {
+  --background: #ece8f6;
+  --foreground: #1a1625;
+  --card: #ffffff;
+  --card-foreground: #1a1625;
+  --muted-foreground: #5a5470;
+  --primary: #7c3aed;
+  --primary-foreground: #ffffff;
+  --secondary: #e0d9f0;
+  --secondary-foreground: #6d28d9;
+  --c-border: #cdc4e0;
+  --c-ring: rgba(124, 58, 237, 0.35);
+  --c-input: #ffffff;
+  --gradient-from: #7c3aed;
+  --gradient-to: #0e7490;
+  --bg-mesh:
+    linear-gradient(180deg, rgba(124, 58, 237, 0.06) 0%, transparent 40%, rgba(6, 182, 212, 0.04) 100%);
+}
+
+/* ── Dark theme (WCAG AA verified) ── */
+.dark {
+  --background: #0f0d1a;
+  --foreground: #f0eef5;
+  --card: #1a1730;
+  --card-foreground: #f0eef5;
+  --muted-foreground: #a8a3b8;
+  --primary: #a78bfa;
+  --primary-foreground: #0f0d1a;
+  --secondary: #231e38;
+  --secondary-foreground: #c4b5fd;
+  --c-border: #2e2845;
+  --c-ring: rgba(167, 139, 250, 0.35);
+  --c-input: #1e1b30;
+  --gradient-from: #c084fc;
+  --gradient-to: #22d3ee;
+  --bg-mesh:
+    linear-gradient(180deg, rgba(124, 58, 237, 0.15) 0%, transparent 40%, rgba(6, 182, 212, 0.08) 100%);
 }
 
 html,
 body {
   height: 100%;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  background-image: var(--bg-mesh);
+  background-attachment: fixed;
+}
+
+.gradient-text {
+  background: linear-gradient(135deg, var(--gradient-from), var(--gradient-to));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Global focus ring for keyboard navigation */
+*:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+  border-radius: 4px;
 }

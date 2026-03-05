@@ -46,14 +46,16 @@ function trackScore(studentTrack: string, internshipTrack: string): { points: nu
 
 // ----- Skills -----
 
-function skillsScore(studentTrack: string, internshipSkills: string[]): { points: number; reason: string; matched: number; total: number } {
+function skillsScore(studentSkills: string[], studentTrack: string, internshipSkills: string[]): { points: number; reason: string; matched: number; total: number } {
   if (internshipSkills.length === 0) return { points: 0, reason: "skills_none", matched: 0, total: 0 };
 
+  // Build student skill set from explicit skills + track aliases
   const sNorm = normalize(studentTrack);
   const sAliases = Object.values(TRACK_ALIASES).find((arr) => arr.includes(sNorm)) ?? [sNorm];
+  const studentSet = new Set([...sAliases, ...studentSkills.map(normalize)]);
 
   const iNorm = internshipSkills.map(normalize);
-  const matched = iNorm.filter((s) => sAliases.includes(s)).length;
+  const matched = iNorm.filter((s) => studentSet.has(s)).length;
   const total = iNorm.length;
   const ratio = total > 0 ? matched / total : 0;
   const points = Math.round(ratio * 35);
@@ -115,6 +117,7 @@ function periodsOverlap(studentPeriods: Period[], iStart?: string | null, iEnd?:
 export type StudentData = {
   track: string;
   city: string;
+  skills?: string[];
   availability_periods: Period[];
 };
 
@@ -126,21 +129,37 @@ export type InternshipData = {
   period_end?: string | null;
 };
 
-export function computeMatch(student: StudentData, internship: InternshipData): MatchResult {
+export type MatchWeights = {
+  track: number;   // default 35
+  skills: number;  // default 35
+  city: number;    // default 20
+  period: number;  // default 10
+};
+
+export const DEFAULT_WEIGHTS: MatchWeights = { track: 35, skills: 35, city: 20, period: 10 };
+
+export function computeMatch(student: StudentData, internship: InternshipData, weights?: Partial<MatchWeights>): MatchResult {
+  const w = { ...DEFAULT_WEIGHTS, ...weights };
+  const total = w.track + w.skills + w.city + w.period || 100;
   const reasons: Reason[] = [];
 
   const track = trackScore(student.track, internship.track_focus);
-  reasons.push({ key: "track", label: track.reason, points: track.points });
+  const trackPts = Math.round((track.points / 35) * w.track);
+  reasons.push({ key: "track", label: track.reason, points: trackPts });
 
-  const skills = skillsScore(student.track, internship.skills);
-  reasons.push({ key: "skills", label: skills.reason, points: skills.points });
+  const skills = skillsScore(student.skills ?? [], student.track, internship.skills);
+  const skillsPts = Math.round((skills.points / 35) * w.skills);
+  reasons.push({ key: "skills", label: skills.reason, points: skillsPts });
 
   const city = cityScore(student.city, internship.city);
-  reasons.push({ key: "city", label: city.reason, points: city.points });
+  const cityPts = Math.round((city.points / 20) * w.city);
+  reasons.push({ key: "city", label: city.reason, points: cityPts });
 
   const period = periodsOverlap(student.availability_periods, internship.period_start, internship.period_end);
-  reasons.push({ key: "period", label: period.reason, points: period.points });
+  const periodPts = Math.round((period.points / 10) * w.period);
+  reasons.push({ key: "period", label: period.reason, points: periodPts });
 
-  const score = track.points + skills.points + city.points + period.points;
-  return { score: Math.min(score, 100), reasons };
+  const raw = trackPts + skillsPts + cityPts + periodPts;
+  const score = Math.min(Math.round((raw / total) * 100), 100);
+  return { score, reasons };
 }

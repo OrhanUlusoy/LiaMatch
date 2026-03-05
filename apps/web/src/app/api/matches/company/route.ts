@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { computeMatch, type StudentData, type InternshipData } from "@/lib/matching/score";
+import { rateLimit, isValidUUID } from "@/lib/api-helpers";
 
 export async function GET(request: NextRequest) {
+  const rl = rateLimit(request);
+  if (rl) return rl;
+
   const supabase = await createSupabaseServerClient();
   const {
     data: { user },
@@ -15,8 +19,8 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const internshipId = searchParams.get("internship_id");
 
-  if (!internshipId) {
-    return NextResponse.json({ error: "internship_id required" }, { status: 400 });
+  if (!internshipId || !isValidUUID(internshipId)) {
+    return NextResponse.json({ error: "Valid internship_id required" }, { status: 400 });
   }
 
   // Verify internship belongs to this company

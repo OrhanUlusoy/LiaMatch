@@ -49,14 +49,14 @@ export default function AboutPage() {
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-semibold">{c.title}</h1>
-      <p className="text-sm text-neutral-700 leading-relaxed max-w-2xl">{c.intro}</p>
+      <p className="text-sm text-muted-foreground leading-relaxed max-w-2xl">{c.intro}</p>
 
       <Card>
         <CardHeader>
           <CardTitle>{c.howTitle}</CardTitle>
         </CardHeader>
         <CardContent>
-          <ol className="list-decimal list-inside space-y-2 text-sm text-neutral-700">
+          <ol className="list-decimal list-inside space-y-2 text-sm text-muted-foreground">
             {c.steps.map((s, i) => (
               <li key={i}>{s}</li>
             ))}
@@ -69,7 +69,7 @@ export default function AboutPage() {
           <CardTitle>{c.scoring}</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-neutral-700 leading-relaxed">{c.scoringDesc}</p>
+          <p className="text-sm text-muted-foreground leading-relaxed">{c.scoringDesc}</p>
         </CardContent>
       </Card>
 
@@ -78,7 +78,7 @@ export default function AboutPage() {
           <CardTitle>{c.techTitle}</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-neutral-700 leading-relaxed">{c.techDesc}</p>
+          <p className="text-sm text-muted-foreground leading-relaxed">{c.techDesc}</p>
         </CardContent>
       </Card>
     </div>

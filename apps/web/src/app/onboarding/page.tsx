@@ -60,8 +60,8 @@ export default function OnboardingPage() {
               onClick={() => setSelected("student")}
               className={`rounded-lg border-2 p-6 text-center transition-colors ${
                 selected === "student"
-                  ? "border-neutral-900 bg-neutral-50"
-                  : "border-neutral-200 hover:border-neutral-400"
+                  ? "border-primary bg-secondary"
+                  : "border-border hover:border-primary/40"
               }`}
             >
               <div className="text-2xl mb-2">🎓</div>
@@ -72,15 +72,15 @@ export default function OnboardingPage() {
               onClick={() => setSelected("company")}
               className={`rounded-lg border-2 p-6 text-center transition-colors ${
                 selected === "company"
-                  ? "border-neutral-900 bg-neutral-50"
-                  : "border-neutral-200 hover:border-neutral-400"
+                  ? "border-primary bg-secondary"
+                  : "border-border hover:border-primary/40"
               }`}
             >
               <div className="text-2xl mb-2">🏢</div>
               <div className="text-sm font-medium">{t("onboarding.company")}</div>
             </button>
           </div>
-          {error && <p className="mt-4 text-sm text-red-600">{error}</p>}
+          {error && <p className="mt-4 text-sm text-red-600 dark:text-red-400">{error}</p>}
           <div className="mt-6">
             <Button onClick={handleContinue} disabled={!selected || loading}>
               {loading ? t("common.loading") : t("onboarding.continue")}
